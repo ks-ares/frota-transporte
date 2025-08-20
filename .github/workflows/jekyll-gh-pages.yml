@@ -1,0 +1,863 @@
+# Sample workflow for buil<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Frota Demo</title>
+    <!-- Inclui a biblioteca Tailwind CSS para estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* Estilos para o modal */
+        .modal {
+            display: none; /* Escondido por padrão */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 90%;
+            max-width: 500px;
+        }
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-btn:hover,
+        .close-btn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #000;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <!-- Container principal da aplicação -->
+    <div class="relative bg-white shadow-xl rounded-2xl w-full max-w-6xl p-8 space-y-8">
+        <!-- Overlay de carregamento -->
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="spinner"></div>
+        </div>
+
+        <header class="text-center">
+            <h1 class="text-4xl font-bold text-gray-800">My Frota Demo</h1>
+            <p class="mt-2 text-gray-600">Sistema de gerenciamento de frota completo</p>
+            <p id="app-id-display" class="mt-2 text-sm font-mono text-gray-400"></p>
+        </header>
+
+        <!-- Seção de Estatísticas -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-center text-white">
+            <div class="p-6 rounded-xl bg-blue-600 shadow-md transition transform hover:scale-105">
+                <h3 class="text-xl font-semibold">Veículos Totais</h3>
+                <p id="total-veiculos" class="mt-2 text-4xl font-bold">0</p>
+            </div>
+            <div class="p-6 rounded-xl bg-green-600 shadow-md transition transform hover:scale-105">
+                <h3 class="text-xl font-semibold">Motoristas</h3>
+                <p id="total-motoristas" class="mt-2 text-4xl font-bold">0</p>
+            </div>
+            <div class="p-6 rounded-xl bg-yellow-600 shadow-md transition transform hover:scale-105">
+                <h3 class="text-xl font-semibold">Ordens de Serviço</h3>
+                <p id="total-ordens" class="mt-2 text-4xl font-bold">0</p>
+            </div>
+            <div class="p-6 rounded-xl bg-purple-600 shadow-md transition transform hover:scale-105">
+                <h3 class="text-xl font-semibold">Viagens Concluídas</h3>
+                <p id="total-viagens" class="mt-2 text-4xl font-bold">0</p>
+            </div>
+        </section>
+
+        <hr class="border-gray-300">
+
+        <!-- Formulários de Cadastro -->
+        <div class="flex flex-col md:flex-row gap-8">
+            <!-- Seção de Adicionar Novo Veículo -->
+            <section class="p-6 bg-gray-100 rounded-xl flex-1">
+                <h2 class="text-2xl font-bold text-gray-700 mb-4">Novo Veículo</h2>
+                <form id="add-veiculo-form" class="space-y-4">
+                    <div>
+                        <label for="placa" class="block text-sm font-medium text-gray-700">Placa</label>
+                        <input type="text" id="placa" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" required>
+                    </div>
+                    <div>
+                        <label for="modelo" class="block text-sm font-medium text-gray-700">Modelo</label>
+                        <input type="text" id="modelo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" required>
+                    </div>
+                    <div>
+                        <label for="ano" class="block text-sm font-medium text-gray-700">Ano</label>
+                        <input type="number" id="ano" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" required>
+                    </div>
+                    <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                        Adicionar Veículo
+                    </button>
+                </form>
+            </section>
+
+            <!-- Seção de Adicionar Novo Motorista -->
+            <section class="p-6 bg-gray-100 rounded-xl flex-1">
+                <h2 class="text-2xl font-bold text-gray-700 mb-4">Novo Motorista</h2>
+                <form id="add-motorista-form" class="space-y-4">
+                    <div>
+                        <label for="nome-motorista" class="block text-sm font-medium text-gray-700">Nome</label>
+                        <input type="text" id="nome-motorista" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" required>
+                    </div>
+                    <div>
+                        <label for="veiculo-motorista" class="block text-sm font-medium text-gray-700">Veículo</label>
+                        <select id="veiculo-motorista" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2">
+                            <option value="">Nenhum</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200">
+                        Adicionar Motorista
+                    </button>
+                </form>
+            </section>
+
+            <!-- Seção de Nova Ordem de Serviço -->
+            <section class="p-6 bg-gray-100 rounded-xl flex-1">
+                <h2 class="text-2xl font-bold text-gray-700 mb-4">Nova Ordem de Serviço</h2>
+                <form id="add-ordem-form" class="space-y-4">
+                    <div>
+                        <label for="descricao-ordem" class="block text-sm font-medium text-gray-700">Descrição</label>
+                        <input type="text" id="descricao-ordem" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" required>
+                    </div>
+                    <div>
+                        <label for="veiculo-ordem" class="block text-sm font-medium text-gray-700">Veículo</label>
+                        <select id="veiculo-ordem" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" required>
+                            <option value="">Selecione um veículo</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-200">
+                        Criar Ordem
+                    </button>
+                </form>
+            </section>
+        </div>
+
+        <hr class="border-gray-300">
+
+        <!-- Formulário para Vale de Viagem -->
+        <section class="p-6 bg-gray-100 rounded-xl">
+            <h2 class="text-2xl font-bold text-gray-700 mb-4">Gerar Vale de Viagem</h2>
+            <form id="add-vale-form" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="motorista-vale" class="block text-sm font-medium text-gray-700">Motorista</label>
+                        <select id="motorista-vale" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" required>
+                            <option value="">Selecione um motorista</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="valor-vale" class="block text-sm font-medium text-gray-700">Valor (R$)</label>
+                        <input type="number" id="valor-vale" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" required step="0.01">
+                    </div>
+                </div>
+                <div>
+                    <label for="descricao-vale" class="block text-sm font-medium text-gray-700">Descrição</label>
+                    <textarea id="descricao-vale" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Ex: Adiantamento para custos de pedágio."></textarea>
+                </div>
+                <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
+                    Emitir Vale de Viagem
+                </button>
+            </form>
+        </section>
+
+        <!-- Seção de Fechar Viagem -->
+        <section class="p-6 bg-gray-100 rounded-xl">
+            <h2 class="text-2xl font-bold text-gray-700 mb-4">Fechar Viagem</h2>
+            <form id="add-viagem-form" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="veiculo-viagem" class="block text-sm font-medium text-gray-700">Veículo</label>
+                        <select id="veiculo-viagem" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" required>
+                            <option value="">Selecione um veículo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="motorista-viagem" class="block text-sm font-medium text-gray-700">Motorista</label>
+                        <select id="motorista-viagem" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" required>
+                            <option value="">Selecione um motorista</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label for="carregamento-viagem" class="block text-sm font-medium text-gray-700">Número de Carregamento</label>
+                    <input type="text" id="carregamento-viagem" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" required>
+                </div>
+                <div>
+                    <label for="frete-viagem" class="block text-sm font-medium text-gray-700">Valor do Frete</label>
+                    <input type="number" id="frete-viagem" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" required>
+                </div>
+                <div>
+                    <label for="abastecimentos-viagem" class="block text-sm font-medium text-gray-700">Abastecimentos na estrada</label>
+                    <textarea id="abastecimentos-viagem" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Ex: Posto Ipiranga (R$ 200,00), Posto Shell (R$ 150,00)"></textarea>
+                </div>
+                <div>
+                    <label for="servicos-viagem" class="block text-sm font-medium text-gray-700">Serviços Mecânicos</label>
+                    <textarea id="servicos-viagem" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Ex: Troca de pneu (R$ 50,00), Reparo na suspensão (R$ 120,00)"></textarea>
+                </div>
+                <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200">
+                        Fechar Viagem
+                </button>
+            </form>
+        </section>
+
+        <hr class="border-gray-300">
+
+        <!-- Tabelas de Visualização -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Tabela de Veículos -->
+            <div class="p-6 bg-gray-100 rounded-xl overflow-x-auto">
+                <h2 class="text-2xl font-bold text-gray-700 mb-4">Lista de Veículos</h2>
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Placa</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modelo</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ano</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-veiculos" class="bg-white divide-y divide-gray-200">
+                        <!-- Conteúdo será injetado por JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tabela de Motoristas -->
+            <div class="p-6 bg-gray-100 rounded-xl overflow-x-auto">
+                <h2 class="text-2xl font-bold text-gray-700 mb-4">Lista de Motoristas</h2>
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Veículo</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-motoristas" class="bg-white divide-y divide-gray-200">
+                        <!-- Conteúdo será injetado por JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tabela de Ordens de Serviço (em linha completa) -->
+        <div class="p-6 bg-gray-100 rounded-xl overflow-x-auto">
+            <h2 class="text-2xl font-bold text-gray-700 mb-4">Ordens de Serviço</h2>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Veículo</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-ordens" class="bg-white divide-y divide-gray-200">
+                    <!-- Conteúdo será injetado por JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tabela de Vales de Viagem -->
+        <div class="p-6 bg-gray-100 rounded-xl overflow-x-auto">
+            <h2 class="text-2xl font-bold text-gray-700 mb-4">Vales de Viagem</h2>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Motorista</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor (R$)</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-vales" class="bg-white divide-y divide-gray-200">
+                    <!-- Conteúdo será injetado por JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tabela de Viagens Concluídas -->
+        <div class="p-6 bg-gray-100 rounded-xl overflow-x-auto">
+            <h2 class="text-2xl font-bold text-gray-700 mb-4">Viagens Concluídas</h2>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cód. Carregamento</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Motorista</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Veículo</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frete (R$)</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Abastecimentos</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Serviços</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-viagens" class="bg-white divide-y divide-gray-200">
+                    <!-- Conteúdo será injetado por JavaScript -->
+                    <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">12345</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">João</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">ABC-1234</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">R$ 1.500,00</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Posto 1 (R$ 500), Posto 2 (R$ 400)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Troca de pneu (R$ 150)</td><td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><button data-id="viagem1" class="deletar-viagem-btn text-red-600 hover:text-red-900">Deletar</button></td></tr>
+                    <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">67890</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Maria</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">DEF-5678</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">R$ 2.200,00</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Posto 3 (R$ 600)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Nenhum</td><td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><button data-id="viagem2" class="deletar-viagem-btn text-red-600 hover:text-red-900">Deletar</button></td></tr>
+                    <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">11223</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Pedro</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">GHI-9012</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">R$ 1.800,00</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Nenhum</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Reparo no motor (R$ 300)</td><td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><button data-id="viagem3" class="deletar-viagem-btn text-red-600 hover:text-red-900">Deletar</button></td></tr>
+                    <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">44556</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Ana</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">JKL-3456</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">R$ 900,00</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Posto 4 (R$ 250)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Troca de óleo (R$ 80)</td><td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><button data-id="viagem4" class="deletar-viagem-btn text-red-600 hover:text-red-900">Deletar</button></td></tr>
+                    <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">77889</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">José</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">MNO-7890</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">R$ 1.100,00</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Posto 5 (R$ 300)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Nenhum</td><td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><button data-id="viagem5" class="deletar-viagem-btn text-red-600 hover:text-red-900">Deletar</button></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Veículo (Escondido por padrão) -->
+    <div id="edit-veiculo-modal" class="modal flex">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h3 class="text-2xl font-bold text-gray-700 mb-4">Editar Veículo</h3>
+            <form id="edit-veiculo-form" class="space-y-4">
+                <input type="hidden" id="edit-veiculo-id">
+                <div>
+                    <label for="edit-placa" class="block text-sm font-medium text-gray-700">Placa</label>
+                    <input type="text" id="edit-placa" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" required>
+                </div>
+                <div>
+                    <label for="edit-modelo" class="block text-sm font-medium text-gray-700">Modelo</label>
+                    <input type="text" id="edit-modelo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" required>
+                </div>
+                <div>
+                    <label for="edit-ano" class="block text-sm font-medium text-gray-700">Ano</label>
+                    <input type="number" id="edit-ano" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" required>
+                </div>
+                <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                    Salvar Alterações
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Importa as bibliotecas do Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, deleteDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // Variáveis globais fornecidas pelo ambiente
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db;
+        let auth;
+        let onSnapshotVeiculosData = [];
+        let motoristasData = [];
+
+        // Função para mostrar ou esconder o overlay de carregamento
+        function toggleLoading(show) {
+            document.getElementById('loading-overlay').classList.toggle('hidden', !show);
+        }
+
+        async function initFirebase() {
+            toggleLoading(true);
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Autenticação com o token fornecido ou de forma anônima
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                document.getElementById('app-id-display').textContent = `ID do Projeto: ${appId}`;
+                startListeners();
+            } catch (error) {
+                console.error("Erro ao inicializar o Firebase:", error);
+                // Exibe uma mensagem de erro na UI se a inicialização falhar
+                document.body.innerHTML = '<p class="text-red-500 text-center text-xl">Erro ao conectar ao banco de dados. Por favor, tente novamente.</p>';
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        // Funções de renderização
+        function renderizarListaVeiculos(veiculos) {
+            const listaVeiculosTbody = document.getElementById('lista-veiculos');
+            listaVeiculosTbody.innerHTML = '';
+            document.getElementById('total-veiculos').textContent = veiculos.length;
+
+            if (veiculos.length === 0) {
+                const row = listaVeiculosTbody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 4;
+                cell.className = "px-6 py-4 whitespace-nowrap text-center text-gray-500";
+                cell.textContent = "Nenhum veículo cadastrado.";
+                return;
+            }
+
+            veiculos.forEach(veiculo => {
+                const row = listaVeiculosTbody.insertRow();
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${veiculo.placa}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${veiculo.modelo}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${veiculo.ano}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                        <button data-id="${veiculo.id}" class="editar-btn text-blue-600 hover:text-blue-900">
+                            Editar
+                        </button>
+                        <button data-id="${veiculo.id}" class="deletar-btn text-red-600 hover:text-red-900">
+                            Deletar
+                        </button>
+                    </td>
+                `;
+            });
+            document.querySelectorAll('.editar-btn').forEach(button => {
+                button.addEventListener('click', (e) => abrirModalEdicao(e.target.dataset.id));
+            });
+            document.querySelectorAll('.deletar-btn').forEach(button => {
+                button.addEventListener('click', async (e) => await deletarDocumento('veiculos', e.target.dataset.id));
+            });
+        }
+
+        function renderizarListaMotoristas(motoristas, veiculos) {
+            const listaMotoristasTbody = document.getElementById('lista-motoristas');
+            listaMotoristasTbody.innerHTML = '';
+            document.getElementById('total-motoristas').textContent = motoristas.length;
+
+            if (motoristas.length === 0) {
+                const row = listaMotoristasTbody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 3;
+                cell.className = "px-6 py-4 whitespace-nowrap text-center text-gray-500";
+                cell.textContent = "Nenhum motorista cadastrado.";
+                return;
+            }
+
+            motoristas.forEach(motorista => {
+                const veiculo = veiculos.find(v => v.id === motorista.veiculoId);
+                const veiculoPlaca = veiculo ? veiculo.placa : 'N/A';
+                const row = listaMotoristasTbody.insertRow();
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${motorista.nome}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${veiculoPlaca}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button data-id="${motorista.id}" class="deletar-motorista-btn text-red-600 hover:text-red-900">
+                            Deletar
+                        </button>
+                    </td>
+                `;
+            });
+            document.querySelectorAll('.deletar-motorista-btn').forEach(button => {
+                button.addEventListener('click', async (e) => await deletarDocumento('motoristas', e.target.dataset.id));
+            });
+        }
+
+        function renderizarListaOrdens(ordens, veiculos) {
+            const listaOrdensTbody = document.getElementById('lista-ordens');
+            listaOrdensTbody.innerHTML = '';
+            document.getElementById('total-ordens').textContent = ordens.length;
+
+            if (ordens.length === 0) {
+                const row = listaOrdensTbody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 3;
+                cell.className = "px-6 py-4 whitespace-nowrap text-center text-gray-500";
+                cell.textContent = "Nenhuma ordem de serviço cadastrada.";
+                return;
+            }
+
+            ordens.forEach(ordem => {
+                const veiculo = veiculos.find(v => v.id === ordem.veiculoId);
+                const veiculoPlaca = veiculo ? veiculo.placa : 'N/A';
+                const row = listaOrdensTbody.insertRow();
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${ordem.descricao}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${veiculoPlaca}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button data-id="${ordem.id}" class="deletar-ordem-btn text-red-600 hover:text-red-900">
+                            Deletar
+                        </button>
+                    </td>
+                `;
+            });
+            document.querySelectorAll('.deletar-ordem-btn').forEach(button => {
+                button.addEventListener('click', async (e) => await deletarDocumento('ordens', e.target.dataset.id));
+            });
+        }
+
+        // Nova função para renderizar a lista de vales de viagem
+        function renderizarListaVales(vales, motoristas) {
+            const listaValesTbody = document.getElementById('lista-vales');
+            listaValesTbody.innerHTML = '';
+            document.getElementById('total-vales').textContent = vales.length;
+
+            if (vales.length === 0) {
+                const row = listaValesTbody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 4;
+                cell.className = "px-6 py-4 whitespace-nowrap text-center text-gray-500";
+                cell.textContent = "Nenhum vale de viagem emitido.";
+                return;
+            }
+
+            vales.forEach(vale => {
+                const motorista = motoristas.find(m => m.id === vale.motoristaId);
+                const motoristaNome = motorista ? motorista.nome : 'N/A';
+                const row = listaValesTbody.insertRow();
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${motoristaNome}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">R$ ${parseFloat(vale.valor).toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${vale.descricao || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button data-id="${vale.id}" class="deletar-vale-btn text-red-600 hover:text-red-900">
+                            Deletar
+                        </button>
+                    </td>
+                `;
+            });
+            document.querySelectorAll('.deletar-vale-btn').forEach(button => {
+                button.addEventListener('click', async (e) => await deletarDocumento('vales', e.target.dataset.id));
+            });
+        }
+
+        function renderizarListaViagens(viagens, veiculos, motoristas) {
+            const listaViagensTbody = document.getElementById('lista-viagens');
+            listaViagensTbody.innerHTML = '';
+            document.getElementById('total-viagens').textContent = viagens.length;
+
+            if (viagens.length === 0) {
+                const row = listaViagensTbody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 7;
+                cell.className = "px-6 py-4 whitespace-nowrap text-center text-gray-500";
+                cell.textContent = "Nenhuma viagem concluída.";
+                return;
+            }
+
+            viagens.forEach(viagem => {
+                const veiculo = veiculos.find(v => v.id === viagem.veiculoId);
+                const motorista = motoristas.find(m => m.id === viagem.motoristaId);
+                const row = listaViagensTbody.insertRow();
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${viagem.carregamento}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${motorista ? motorista.nome : 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${veiculo ? veiculo.placa : 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">R$ ${parseFloat(viagem.frete).toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${viagem.abastecimentos || 'Nenhum'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${viagem.servicos || 'Nenhum'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button data-id="${viagem.id}" class="deletar-viagem-btn text-red-600 hover:text-red-900">
+                            Deletar
+                        </button>
+                    </td>
+                `;
+            });
+            document.querySelectorAll('.deletar-viagem-btn').forEach(button => {
+                button.addEventListener('click', async (e) => await deletarDocumento('viagens', e.target.dataset.id));
+            });
+        }
+
+        // Popula os campos de seleção com dados do Firestore
+        function popularSelects(veiculos, motoristas) {
+            const selectMotoristaVeiculo = document.getElementById('veiculo-motorista');
+            const selectOrdemVeiculo = document.getElementById('veiculo-ordem');
+            const selectVeiculoViagem = document.getElementById('veiculo-viagem');
+            const selectMotoristaViagem = document.getElementById('motorista-viagem');
+            const selectMotoristaVale = document.getElementById('motorista-vale'); // Novo select para vales
+
+            // Limpa os selects
+            selectMotoristaVeiculo.innerHTML = '<option value="">Nenhum</option>';
+            selectOrdemVeiculo.innerHTML = '<option value="">Selecione um veículo</option>';
+            selectVeiculoViagem.innerHTML = '<option value="">Selecione um veículo</option>';
+            selectMotoristaViagem.innerHTML = '<option value="">Selecione um motorista</option>';
+            selectMotoristaVale.innerHTML = '<option value="">Selecione um motorista</option>'; // Limpa o novo select
+
+            veiculos.forEach(veiculo => {
+                const optionMotorista = document.createElement('option');
+                optionMotorista.value = veiculo.id;
+                optionMotorista.textContent = `${veiculo.modelo} (${veiculo.placa})`;
+                selectMotoristaVeiculo.appendChild(optionMotorista);
+
+                const optionOrdem = document.createElement('option');
+                optionOrdem.value = veiculo.id;
+                optionOrdem.textContent = `${veiculo.modelo} (${veiculo.placa})`;
+                selectOrdemVeiculo.appendChild(optionOrdem);
+
+                const optionViagem = document.createElement('option');
+                optionViagem.value = veiculo.id;
+                optionViagem.textContent = `${veiculo.modelo} (${veiculo.placa})`;
+                selectVeiculoViagem.appendChild(optionViagem);
+            });
+
+            motoristas.forEach(motorista => {
+                const option = document.createElement('option');
+                option.value = motorista.id;
+                option.textContent = motorista.nome;
+                selectMotoristaViagem.appendChild(option);
+
+                const optionVale = document.createElement('option'); // Novo option para vales
+                optionVale.value = motorista.id;
+                optionVale.textContent = motorista.nome;
+                selectMotoristaVale.appendChild(optionVale);
+            });
+        }
+
+        // --- Lógica do Banco de Dados Firestore ---
+
+        // Função para adicionar um novo documento
+        async function adicionarDocumento(colecao, dados) {
+            try {
+                toggleLoading(true);
+                await addDoc(collection(db, `artifacts/${appId}/public/data/${colecao}`), dados);
+            } catch (e) {
+                console.error("Erro ao adicionar documento: ", e);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        // Função para deletar um documento
+        async function deletarDocumento(colecao, id) {
+            try {
+                toggleLoading(true);
+                const docRef = doc(db, `artifacts/${appId}/public/data/${colecao}`, id);
+                await deleteDoc(docRef);
+            } catch (e) {
+                console.error("Erro ao deletar documento: ", e);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        // Função para atualizar um documento
+        async function atualizarDocumento(colecao, id, dados) {
+            try {
+                toggleLoading(true);
+                const docRef = doc(db, `artifacts/${appId}/public/data/${colecao}`, id);
+                await setDoc(docRef, dados, { merge: true });
+            } catch (e) {
+                console.error("Erro ao atualizar documento: ", e);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        // Listeners em tempo real do Firestore
+        function startListeners() {
+            onSnapshot(collection(db, `artifacts/${appId}/public/data/veiculos`), (snapshot) => {
+                onSnapshotVeiculosData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderizarListaVeiculos(onSnapshotVeiculosData);
+                popularSelects(onSnapshotVeiculosData, motoristasData);
+            });
+
+            onSnapshot(collection(db, `artifacts/${appId}/public/data/motoristas`), (snapshot) => {
+                motoristasData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderizarListaMotoristas(motoristasData, onSnapshotVeiculosData);
+                popularSelects(onSnapshotVeiculosData, motoristasData);
+            });
+
+            onSnapshot(collection(db, `artifacts/${appId}/public/data/ordens`), (snapshot) => {
+                const ordens = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderizarListaOrdens(ordens, onSnapshotVeiculosData);
+            });
+            
+            // Novo listener para a coleção de vales
+            onSnapshot(collection(db, `artifacts/${appId}/public/data/vales`), (snapshot) => {
+                const vales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderizarListaVales(vales, motoristasData);
+            });
+
+
+            onSnapshot(collection(db, `artifacts/${appId}/public/data/viagens`), (snapshot) => {
+                const viagens = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderizarListaViagens(viagens, onSnapshotVeiculosData, motoristasData);
+            });
+        }
+
+        // Lógica do Modal de Edição
+        const modal = document.getElementById('edit-veiculo-modal');
+        const spanClose = document.getElementsByClassName("close-btn")[0];
+        const editForm = document.getElementById('edit-veiculo-form');
+
+        function abrirModalEdicao(id) {
+            const veiculo = onSnapshotVeiculosData.find(v => v.id === id);
+            if (veiculo) {
+                document.getElementById('edit-veiculo-id').value = veiculo.id;
+                document.getElementById('edit-placa').value = veiculo.placa;
+                document.getElementById('edit-modelo').value = veiculo.modelo;
+                document.getElementById('edit-ano').value = veiculo.ano;
+                modal.style.display = "flex";
+            }
+        }
+
+        spanClose.onclick = () => {
+            modal.style.display = "none";
+        };
+        window.onclick = (event) => {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        };
+
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-veiculo-id').value;
+            const dadosAtualizados = {
+                placa: document.getElementById('edit-placa').value,
+                modelo: document.getElementById('edit-modelo').value,
+                ano: parseInt(document.getElementById('edit-ano').value)
+            };
+            await atualizarDocumento('veiculos', id, dadosAtualizados);
+            modal.style.display = "none";
+        });
+
+        // Adiciona os eventos de submit dos formulários
+        document.getElementById('add-veiculo-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const novoVeiculo = {
+                placa: document.getElementById('placa').value,
+                modelo: document.getElementById('modelo').value,
+                ano: parseInt(document.getElementById('ano').value)
+            };
+            await adicionarDocumento('veiculos', novoVeiculo);
+            e.target.reset();
+        });
+
+        document.getElementById('add-motorista-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const novoMotorista = {
+                nome: document.getElementById('nome-motorista').value,
+                veiculoId: document.getElementById('veiculo-motorista').value || null
+            };
+            await adicionarDocumento('motoristas', novoMotorista);
+            e.target.reset();
+        });
+
+        document.getElementById('add-ordem-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const novaOrdem = {
+                descricao: document.getElementById('descricao-ordem').value,
+                veiculoId: document.getElementById('veiculo-ordem').value
+            };
+            await adicionarDocumento('ordens', novaOrdem);
+            e.target.reset();
+        });
+
+        // Event listener para o novo formulário de vale de viagem
+        document.getElementById('add-vale-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const novoVale = {
+                motoristaId: document.getElementById('motorista-vale').value,
+                valor: parseFloat(document.getElementById('valor-vale').value),
+                descricao: document.getElementById('descricao-vale').value
+            };
+            await adicionarDocumento('vales', novoVale);
+            e.target.reset();
+        });
+
+        document.getElementById('add-viagem-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const novaViagem = {
+                veiculoId: document.getElementById('veiculo-viagem').value,
+                motoristaId: document.getElementById('motorista-viagem').value,
+                carregamento: document.getElementById('carregamento-viagem').value,
+                frete: parseFloat(document.getElementById('frete-viagem').value),
+                abastecimentos: document.getElementById('abastecimentos-viagem').value,
+                servicos: document.getElementById('servicos-viagem').value
+            };
+            await adicionarDocumento('viagens', novaViagem);
+            e.target.reset();
+        });
+
+        window.onload = initFirebase;
+    </script>
+</body>
+</html>
+ding and deploying a Jekyll site to GitHub Pages
+name: Deploy Jekyll with GitHub Pages dependencies preinstalled
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["main"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Build job
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+
+  # Deployment job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
